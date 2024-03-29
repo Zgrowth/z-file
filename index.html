@@ -1,41 +1,101 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>File Upload to LeanCloud</title>
-<!-- 引入 LeanCloud 的 JavaScript SDK -->
-<script src="https://unpkg.com/leancloud-storage@4.15.2/dist/av-min.js"></script>
-<script>
-// 初始化 LeanCloud 应用
-AV.init({
-    appId: "f2b0Nh5pSJzstBiy3p0iajM2-gzGzoHsz", // 替换为你的 App ID
-    appKey: "MY0v9ZfgAOf5VZGgBP4eiG6e", // 替换为你的 App Key
-    serverURL: "https://cn-n1-console-api.leancloud.cn" // 替换为你的 Server URL
-});
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>File Upload to Github</title>
+    <script src="https://unpkg.com/leancloud-storage@4.15.2/dist/av-min.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 20px;
+        text-align: center;
+      }
 
-// 文件上传函数
-function uploadFile(fileInput) {
-    if (fileInput.files.length > 0) {
-        var file = fileInput.files[0];
-        var name = file.name;
-        var avFile = new AV.File(name, file);
+      h1 {
+        color: #333;
+      }
 
-        avFile.save().then(function (file) {
-            alert("文件上传成功！File URL: " + file.url());
-        }, function (error) {
-            alert("文件上传失败：" + error.message);
-        });
-    } else {
-        alert("请选择一个文件。");
-    }
-}
+      .upload-container {
+        margin-top: 30px;
+        padding: 20px;
+      }
 
-</script>
-</head>
-<body>
-<h1>上传文件到 LeanCloud</h1>
-<input type="file" id="file-input" />
-<button onclick="uploadFile(document.getElementById('file-input'))">上传文件</button>
-</body>
+      .custom-file-upload {
+        display: inline-block;
+        padding: 12px 24px;
+        cursor: pointer;
+        border-radius: 4px;
+        background-color: #5cb85c;
+        color: white;
+        border: 1px solid transparent;
+        transition: all 0.3s ease-in-out;
+      }
+
+      .custom-file-upload:hover {
+        background-color: #4cae4c;
+      }
+
+      #file-input {
+        display: none; /* Hide the default file input */
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .upload-container {
+          padding: 15px;
+        }
+        .custom-file-upload {
+          padding: 10px 20px; /* Slightly smaller padding on mobile */
+        }
+      }
+    </style>
+    <script>
+      // 初始化 LeanCloud 应用
+      AV.init({
+        appId: "f2b0Nh5pSJzstBiy3p0iajM2-gzGzoHsz", // 替换为你的 App ID
+        appKey: "MY0v9ZfgAOf5VZGgBP4eiG6e", // 替换为你的 App Key
+        serverURL: "https://cn-n1-console-api.leancloud.cn", // 替换为你的 Server URL
+      });
+
+      // 文件上传函数
+      function uploadFile(fileInput) {
+        if (fileInput.files.length > 0) {
+          var file = fileInput.files[0];
+          var name = file.name;
+
+          // 检查文件大小 (以字节为单位)，这里限制为 5MB
+          var maxSize = 5 * 1024 * 1024; // 5MB
+          if (file.size > maxSize) {
+            alert("文件太大，不可以超过 5MB。");
+            return;
+          }
+          var avFile = new AV.File(name, file);
+
+          avFile.save().then(
+            function (file) {
+              alert("文件上传成功！File URL: " + file.url());
+            },
+            function (error) {
+              alert("文件上传失败：" + error.message);
+            }
+          );
+        } else {
+          alert("请选择一个文件。");
+        }
+      }
+
+      // 手动触发文件选择框
+      function triggerFileInput() {
+        document.getElementById("file-input").click();
+      }
+    </script>
+  </head>
+  <body>
+    <h1>上传至github仓库</h1>
+    <div class="upload-container">
+      <label for="file-input" class="custom-file-upload"> 选择文件 </label>
+      <input type="file" id="file-input" onchange="uploadFile(this)" />
+    </div>
+  </body>
 </html>
