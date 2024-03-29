@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File Upload to LeanCloud</title>
+<!-- 引入 LeanCloud 的 JavaScript SDK -->
+<script src="https://unpkg.com/leancloud-storage@4.15.2/dist/av-min.js"></script>
+<script>
+// 初始化 LeanCloud 应用
+AV.init({
+    appId: "f2b0Nh5pSJzstBiy3p0iajM2-gzGzoHsz", // 替换为你的 App ID
+    appKey: "MY0v9ZfgAOf5VZGgBP4eiG6e", // 替换为你的 App Key
+    serverURL: "RFNeuF52rbwbjUniNrjxlPD7" // 替换为你的 Server URL
+});
+
+// 文件上传函数
+function uploadFile(fileInput) {
+    if (fileInput.files.length > 0) {
+        var file = fileInput.files[0];
+        var name = file.name;
+        var avFile = new AV.File(name, file);
+
+        avFile.save().then(function (file) {
+            alert("文件上传成功！File URL: " + file.url());
+        }, function (error) {
+            alert("文件上传失败：" + error.message);
+        });
+    } else {
+        alert("请选择一个文件。");
+    }
+}
+
+</script>
+</head>
+<body>
+<h1>上传文件到 LeanCloud</h1>
+<input type="file" id="file-input" />
+<button onclick="uploadFile(document.getElementById('file-input'))">上传文件</button>
+</body>
+</html>
