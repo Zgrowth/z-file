@@ -63,7 +63,7 @@ async function init() {
       execSync('git config --local user.name "Zgrowth"');
       execSync('git config --local user.email "18296884762@163.com"');
       execSync('git add downloaded/*');
-      execSync('git commit -m "Add downloaded files"');
+      execSync(`git commit -m "Add downloaded files ${new Date().getTime()}"`);
       execSync('git push');
       deleteClassData();
     })
