@@ -1,0 +1,15 @@
+{
+  "name": "z-file",
+  "version": "1.0.0",
+  "description": "",
+  "main": "download-and-commit.js",
+  "scripts": {
+    "start": "node ./download-and-commit.js"
+  },
+  "keywords": [],
+  "author": "zs",
+  "license": "ISC",
+  "dependencies": {
+    "leancloud-storage": "^4.15.2"
+  }
+}
