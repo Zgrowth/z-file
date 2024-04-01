@@ -1,0 +1,23 @@
+name: Download and Commit Files
+
+on:
+  workflow_dispatch:  # 手动触发
+
+jobs:
+  download-and-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: npm install
+        run: npm install
+    
+      - name: Download files and commit
+        run: npm start
