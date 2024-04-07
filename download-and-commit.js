@@ -1,5 +1,5 @@
 const fs = require('fs');
-const https = require('https');
+const http = require('http');
 const { execSync } = require('child_process');
 const AV = require("leancloud-storage");
 
@@ -15,7 +15,7 @@ AV.init({
 const downloadFile = (url, outputPath) => {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(outputPath);
-    https.get(url, (response) => {
+    http.get(url, (response) => {
       response.pipe(file);
       file.on('finish', () => {
         file.close(resolve);
@@ -54,8 +54,8 @@ async function init() {
       // 提取文件名，并定义本地下载路径
       const fileName = url.split('/').pop();
       const outputPath = `./downloaded/${name || fileName}`;
-      const realUrl = url.replace('http://', 'https://');
-      return downloadFile(realUrl, outputPath);
+      // const realUrl = url.replace('http://', 'https://');
+      return downloadFile(url, outputPath);
     })
   )
     .then(() => {
