@@ -40,6 +40,19 @@
         display: none; /* Hide the default file input */
       }
 
+      #loading {
+        display: none; /* 默认不显示 */
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        color: white;
+        text-align: center;
+        line-height: 100vh; /* 让文字垂直居中 */
+      }
+
       /* Responsive adjustments */
       @media (max-width: 768px) {
         .upload-container {
@@ -59,29 +72,86 @@
       });
 
       // 文件上传函数
-      function uploadFile(fileInput) {
+      async function uploadFile(fileInput) {
         if (fileInput.files.length > 0) {
-          // 遍历所有选择的文件
-          Array.from(fileInput.files).forEach((file) => {
-            // 检查文件大小（20MB）
-            if (file.size <= 20 * 1024 * 1024) {
-              // 创建 LeanCloud File 对象
-              const leanFile = new AV.File(file.name, file);
-
-              // 保存文件到 LeanCloud
-              leanFile
-                .save()
-                .then((file) => {
-                  console.log(`File uploaded successfully: ${file.url()}`);
-                })
-                .catch((error) => {
-                  alert(`Error uploading file: ${error}`);
-                });
-            } else {
-              alert(`${file.name} is too large. Limit is 20MB.`);
+          showLoading();
+          try {
+            const results = await uploadFilesSequentially(fileInput.files);
+            console.log("All files uploaded:", results);
+            const errResults = results.filter((i) => i.status === "error");
+            if (errResults.length > 0) {
+              alert(
+                "部分文件上传失败：" +
+                  errResults.map((i) => i.message).join(", ")
+              );
             }
-          });
+            hideLoading();
+          } catch (error) {
+            hideLoading();
+            console.error(
+              "An error occurred during the file upload process:",
+              error
+            );
+          }
         }
+      }
+
+      // 异步函数，逐个上传文件
+      async function uploadFilesSequentially(fileList) {
+        const uploadedFiles = [];
+
+        for (let i = 0; i < fileList.length; i++) {
+          try {
+            const file = fileList[i];
+            if (file.size >= 20 * 1024 * 1024) {
+              uploadedFiles.push({
+                status: "error",
+                name: file.name,
+                message: "文件大小超过限制",
+              });
+              continue;
+            }
+            const avFile = new AV.File(file.name, file);
+            const uploadedFile = await avFile.save({
+              onprogress: (progress) => {
+                console.log(progress);
+                setLoadingProgress(progress.percent, i + 1, fileList.length);
+              },
+            }); // 等待文件上传完成
+            uploadedFiles.push(uploadedFile); // 将上传后的文件加入结果数组
+          } catch (error) {
+            console.error(`Error uploading file ${file.name}:`, error);
+            // 可以根据需要决定是停止上传还是继续尝试上传其余文件
+            // break; // 停止上传
+            // continue; // 跳过当前文件，继续下一个文件
+            uploadedFiles.push({
+              status: "error",
+              name: file.name,
+              message: error || error.message,
+            });
+          }
+        }
+
+        return uploadedFiles;
+      }
+
+      // 设置loading文案
+      function setLoadingProgress(num, idx, len) {
+        document.getElementById(
+          "loading"
+        ).innerText = `正在上传${idx}/${len}文件...(${parseFloat(num).toFixed(
+          2
+        )}%)`;
+      }
+
+      // 显示 loading 动画
+      function showLoading() {
+        document.getElementById("loading").style.display = "block";
+      }
+
+      // 隐藏 loading 动画
+      function hideLoading() {
+        document.getElementById("loading").style.display = "none";
       }
 
       // 手动触发文件选择框
@@ -96,5 +166,6 @@
       <label for="file-input" class="custom-file-upload"> 选择文件 </label>
       <input type="file" id="file-input" onchange="uploadFile(this)" multiple />
     </div>
+    <div id="loading">Loading...</div>
   </body>
 </html>
