@@ -48,6 +48,7 @@ function getFiles() {
 
 async function init() {
   const fileUrls = await getFiles();
+  console.log('fileUrls🍑:', fileUrls);
   // 下载所有文件
   await Promise.all(
     fileUrls.map(({ url, name }) => {
