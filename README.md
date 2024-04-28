@@ -10,106 +10,110 @@
 ### 步骤
 1. 创建[leancloud](https://console.leancloud.cn/)账号，然后创建一个应用，拿到appId和appKey。根据[文档](https://docs.leancloud.cn/sdk/storage/guide/js/#%E4%BF%9D%E5%AD%98%E6%96%87%E4%BB%B6)可以看到，`Leancloud`提供了`js`的sdk，我们使用这个sdk来操作文件,实现思路中的步骤1和步骤2。示例如下
 ```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>File Upload to Github</title>
-    <script src="https://unpkg.com/leancloud-storage@4.15.2/dist/av-min.js"></script>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 20px;
-        text-align: center;
-      }
+<script>
+  // 初始化 LeanCloud 应用
+  AV.init({
+    appId: "appId", // 替换为你的 App ID
+    appKey: "appKey", // 替换为你的 App Key
+    serverURL: "https://cn-n1-console-api.leancloud.cn", // 替换为你的 Server URL
+  });
 
-      h1 {
-        color: #333;
-      }
-
-      .upload-container {
-        margin-top: 30px;
-        padding: 20px;
-      }
-
-      .custom-file-upload {
-        display: inline-block;
-        padding: 12px 24px;
-        cursor: pointer;
-        border-radius: 4px;
-        background-color: #5cb85c;
-        color: white;
-        border: 1px solid transparent;
-        transition: all 0.3s ease-in-out;
-      }
-
-      .custom-file-upload:hover {
-        background-color: #4cae4c;
-      }
-
-      #file-input {
-        display: none; /* Hide the default file input */
-      }
-
-      /* Responsive adjustments */
-      @media (max-width: 768px) {
-        .upload-container {
-          padding: 15px;
+  // 文件上传函数
+  async function uploadFile(fileInput) {
+    if (fileInput.files.length > 0) {
+      showLoading();
+      try {
+        const results = await uploadFilesSequentially(fileInput.files);
+        console.log("All files uploaded:", results);
+        const errResults = results.filter((i) => i.status === "error");
+        if (errResults.length > 0) {
+          alert(
+            "部分文件上传失败：" +
+              errResults.map((i) => i.message).join(", ")
+          );
         }
-        .custom-file-upload {
-          padding: 10px 20px; /* Slightly smaller padding on mobile */
-        }
+        hideLoading();
+      } catch (error) {
+        hideLoading();
+        console.error(
+          "An error occurred during the file upload process:",
+          error
+        );
       }
-    </style>
-    <script>
-      // 初始化 LeanCloud 应用
-      AV.init({
-        appId: "appId", // 替换为你的 App ID
-        appKey: "appKey", // 替换为你的 App Key
-        serverURL: "https://cn-n1-console-api.leancloud.cn", // 替换为你的 Server URL
-      });
+    }
+  }
 
-      // 文件上传函数
-      function uploadFile(fileInput) {
-        if (fileInput.files.length > 0) {
-          // 遍历所有选择的文件
-          Array.from(fileInput.files).forEach((file) => {
-            // 检查文件大小（20MB）
-            if (file.size <= 20 * 1024 * 1024) {
-              // 创建 LeanCloud File 对象
-              const leanFile = new AV.File(file.name, file);
+  // 异步函数，逐个上传文件
+  async function uploadFilesSequentially(fileList) {
+    const uploadedFiles = [];
 
-              // 保存文件到 LeanCloud
-              leanFile
-                .save()
-                .then((file) => {
-                  console.log(`File uploaded successfully: ${file.url()}`);
-                })
-                .catch((error) => {
-                  alert(`Error uploading file: ${error}`);
-                });
-            } else {
-              alert(`${file.name} is too large. Limit is 20MB.`);
-            }
+    for (let i = 0; i < fileList.length; i++) {
+      try {
+        const file = fileList[i];
+        if (file.size >= 20 * 1024 * 1024) {
+          uploadedFiles.push({
+            status: "error",
+            name: file.name,
+            message: "文件大小超过限制",
           });
+          continue;
         }
+        const avFile = new AV.File(file.name, file);
+        const uploadedFile = await avFile.save({
+          onprogress: (progress) => {
+            console.log(progress);
+            setLoadingProgress(progress.percent, i + 1, fileList.length);
+          },
+        }); // 等待文件上传完成
+        uploadedFiles.push(uploadedFile); // 将上传后的文件加入结果数组
+      } catch (error) {
+        console.error(`Error uploading file ${file.name}:`, error);
+        // 可以根据需要决定是停止上传还是继续尝试上传其余文件
+        // break; // 停止上传
+        // continue; // 跳过当前文件，继续下一个文件
+        uploadedFiles.push({
+          status: "error",
+          name: file.name,
+          message: error || error.message,
+        });
       }
+    }
 
-      // 手动触发文件选择框
-      function triggerFileInput() {
-        document.getElementById("file-input").click();
-      }
-    </script>
-  </head>
-  <body>
-    <h1>上传至github仓库</h1>
-    <div class="upload-container">
-      <label for="file-input" class="custom-file-upload"> 选择文件 </label>
-      <input type="file" id="file-input" onchange="uploadFile(this)" multiple />
-    </div>
-  </body>
-</html>
+    return uploadedFiles;
+  }
+
+  // 设置loading文案
+  function setLoadingProgress(num, idx, len) {
+    document.getElementById(
+      "loading"
+    ).innerText = `正在上传${idx}/${len}文件...(${parseFloat(num).toFixed(
+      2
+    )}%)`;
+  }
+
+  // 显示 loading 动画
+  function showLoading() {
+    document.getElementById("loading").style.display = "block";
+  }
+
+  // 隐藏 loading 动画
+  function hideLoading() {
+    document.getElementById("loading").style.display = "none";
+  }
+
+  // 手动触发文件选择框
+  function triggerFileInput() {
+    document.getElementById("file-input").click();
+  }
+</script>
+<body>
+  <h1>上传至github仓库</h1>
+  <div class="upload-container">
+    <label for="file-input" class="custom-file-upload"> 选择文件 </label>
+    <input type="file" id="file-input" onchange="uploadFile(this)" multiple />
+  </div>
+  <div id="loading">Loading...</div>
+</body>
 ```
 
 2. 创建一个js文件，用于读取leancloud中转站的文件，然后将文件上传到github仓库。
