@@ -3,8 +3,8 @@ name: Download and Commit Files
 on:
   workflow_dispatch:  # 手动触发
    # 定时器 github服务器时间比北京时间晚8小时 定时早上6点执行
-  schedule: 
-    - cron: '0 16 * * *'
+  # schedule: 
+    # - cron: '0 16 * * *'
 
 jobs:
   download-and-commit:
