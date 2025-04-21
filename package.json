@@ -10,6 +10,6 @@
   "author": "zs",
   "license": "ISC",
   "dependencies": {
-    "leancloud-storage": "^4.15.2"
+    "leancloud-storage": "4.15.2"
   }
 }
